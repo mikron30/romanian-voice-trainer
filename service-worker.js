@@ -1,8 +1,9 @@
-const CACHE_NAME = 'romanian-voice-trainer-v2';
+const CACHE_NAME = 'romanian-voice-trainer-v3-users';
 const BASE_URL = new URL('./', self.location.href).href;
 const APP_SHELL = [
   BASE_URL,
   new URL('manifest.webmanifest', BASE_URL).href,
+  new URL('firebase-config.js', BASE_URL).href,
   new URL('icon-192.png', BASE_URL).href,
   new URL('icon-512.png', BASE_URL).href,
 ];

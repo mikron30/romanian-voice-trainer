@@ -1,0 +1,23 @@
+הפעלת משתמשים באפליקציית רומנית בקול
+======================================
+
+הקוד כבר כולל:
+- Google
+- מייל וסיסמה
+- אורח
+- מאגר מילים וסטטיסטיקה נפרדים לכל משתמש
+
+כדי להפעיל זאת צריך ליצור פרויקט Firebase פעם אחת:
+
+1. היכנס ל-Firebase Console וצור פרויקט חדש.
+2. הוסף Web app והעתק את firebaseConfig.
+3. ערוך את firebase-config.js והדבק את ששת הערכים.
+4. Authentication > Sign-in method:
+   הפעל Google, Email/Password ו-Anonymous.
+5. Authentication > Settings > Authorized domains:
+   הוסף mikron30.github.io
+6. צור Firestore Database.
+7. במסך Rules של Firestore הדבק את firestore.rules ופרסם.
+8. העלה את כל הקבצים לתיקיית השורש של מאגר GitHub Pages.
+
+אם firebase-config.js נשאר ריק, האתר ימשיך לעבוד במצב מקומי ללא משתמשים.
