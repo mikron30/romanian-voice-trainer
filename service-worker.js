@@ -1,4 +1,4 @@
-const CACHE_NAME = 'romanian-voice-trainer-v4-continuous';
+const CACHE_NAME = 'romanian-voice-trainer-v5-four-seconds-score-color';
 const BASE_URL = new URL('./', self.location.href).href;
 const APP_SHELL = [
   BASE_URL,
