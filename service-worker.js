@@ -1,4 +1,4 @@
-const CACHE_NAME = 'romanian-voice-trainer-v6-show-romanian-while-speaking';
+const CACHE_NAME = 'romanian-voice-trainer-v7-colored-romanian-result';
 const BASE_URL = new URL('./', self.location.href).href;
 const APP_SHELL = [
   BASE_URL,
