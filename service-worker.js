@@ -1,4 +1,4 @@
-const CACHE_NAME = 'romanian-voice-trainer-v10-previous-word-flags';
+const CACHE_NAME = 'romanian-voice-trainer-v11-topic-stats-weak-words';
 const BASE_URL = new URL('./', self.location.href).href;
 const APP_SHELL = [
   BASE_URL,
