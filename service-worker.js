@@ -1,4 +1,4 @@
-const CACHE_NAME = 'romanian-voice-trainer-v18-speech-retry';
+const CACHE_NAME = 'romanian-voice-trainer-v19-tdz-fix';
 const BASE_URL = new URL('./', self.location.href).href;
 const APP_SHELL = [
   BASE_URL,
