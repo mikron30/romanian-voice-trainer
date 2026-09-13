@@ -1,4 +1,4 @@
-const CACHE_NAME = 'romanian-voice-trainer-v21-build-fix';
+const CACHE_NAME = 'romanian-voice-trainer-v22-daily-conversation';
 const BASE_URL = new URL('./', self.location.href).href;
 const APP_SHELL = [
   BASE_URL,
@@ -6,6 +6,9 @@ const APP_SHELL = [
   new URL('firebase-config.js', BASE_URL).href,
   new URL('icon-192.png', BASE_URL).href,
   new URL('icon-512.png', BASE_URL).href,
+  new URL('index-v22-daily-conversation-loader.js', BASE_URL).href,
+  new URL('index-v21-build-fix.js', BASE_URL).href,
+  new URL('index-CVWgLaxh.css', BASE_URL).href,
 ];
 
 self.addEventListener('install', (event) => {
