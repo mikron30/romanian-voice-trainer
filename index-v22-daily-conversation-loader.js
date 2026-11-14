@@ -245,6 +245,31 @@ for (const patch of bilingualVoicePatches) {
 }
 
 // Display bilingual voice commands directly beside the active listening controls.
+// Make the visible command guide actionable. Reuse the same command executor as speech.
+const clickableGuidePatches = [
+  {
+    description: "Add a safe click handler that pronounces the Romanian command before executing it",
+    find: "},Jt=async(e,t)=>{",
+    replacement: `},
+__clickVoiceGuide=async(entry)=>{
+  const types={'בחר נושא':'chooseTopic','עבור לנושא הבא':'nextCategory','עצור את הרצף הקולי':'stopVoice','בחירה רגילה':'regularMode','כל המילים ברצף':'sequentialMode'};
+  const type=types[entry.he];
+  if(!type)return;
+  const session=ve.current;
+  // Stop the current listening window before speaking, so TTS is not scored as an answer.
+  await qt();
+  try{await Nt(entry.ro,'ro-RO',N.current.romanianRate)}catch(err){console.warn('Romanian pronunciation unavailable',err)}
+  if(type==='chooseTopic'&&!L(session)){S('הפעל רצף קולי כדי לבחור נושא בקול');return}
+  await __doVoiceIntent({type,transcript:entry.he},session);
+},
+Jt=async(e,t)=>{`
+  },
+  {
+    description: "Turn the guide rows into accessible action buttons",
+    find: "(0,I.jsxs)(`div`,{className:`voice-command-pair`,children:[",
+    replacement: "(0,I.jsxs)(`button`,{type:`button`,className:`voice-command-pair`,onClick:()=>__clickVoiceGuide(entry),title:`השמע ברומנית והפעל: ${entry.he}`,style:{cursor:`pointer`,font:`inherit`,width:`100%`,textAlign:`inherit`},children:["
+  }
+];
 const voiceGuidePatches = [
   {
     "description": "Show all supported bilingual spoken commands on the practice screen",
@@ -257,6 +282,11 @@ const voiceGuidePatches = [
     "replacement": "].map"
   }
 ];
+for (const patch of clickableGuidePatches) {
+ const count=source.split(patch.find).length-1;
+ if(count!==1)throw new Error('Cannot add clickable commands: '+patch.description+' ('+count+')');
+ source=source.replace(patch.find,patch.replacement);
+}
 for (const patch of voiceGuidePatches) {
   const count = source.split(patch.find).length - 1;
   if (count !== 1) throw new Error(`Could not apply ${patch.description}; found ${count} matches`);
