@@ -1,4 +1,4 @@
-const CACHE_NAME = 'romanian-voice-trainer-v25-bilingual-voice-controls';
+const CACHE_NAME = 'romanian-voice-trainer-v26-visible-voice-command-guide';
 const BASE_URL = new URL('./', self.location.href).href;
 const APP_SHELL = [
   BASE_URL,
