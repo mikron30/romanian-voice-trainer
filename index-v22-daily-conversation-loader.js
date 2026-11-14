@@ -185,6 +185,65 @@ for (const patch of nextTopicPatches) {
   source = source.replace(patch.find, patch.replacement);
 }
 
+// Bilingual spoken controls during Romanian practice.
+const bilingualVoicePatches = [
+  {
+    "description": "Bilingual speech intent recognition and topic aliases",
+    "find": "function mt(){return`אפשר לומר:",
+    "replacement": "\nconst __roTopics={\"הכול\":[\"toate\",\"toate subiectele\"],\"ברכות\":[\"salutari\"],\"בסיס\":[\"baza\"],\"משפטים\":[\"propozitii\"],\"כינויי גוף\":[\"pronume\"],\"שאלות\":[\"intrebari\"],\"מספרים\":[\"numere\"],\"זמן\":[\"timp\"],\"ימים\":[\"zile\"],\"משפחה\":[\"familie\"],\"אנשים\":[\"oameni\"],\"אוכל\":[\"mancare\"],\"בית\":[\"casa\"],\"חפצים\":[\"obiecte\"],\"נסיעות\":[\"calatorii\",\"transport\"],\"פעלים\":[\"verbe\"],\"תארים\":[\"adjective\"],\"צבעים\":[\"culori\"],\"גוף\":[\"corp\"],\"חיות\":[\"animale\"],\"טבע\":[\"natura\"],\"לימודים\":[\"studii\"],\"עבודה\":[\"munca\"],\"שיחה יומיומית\":[\"conversatie zilnica\",\"conversatie de zi cu zi\"]};\nfunction __spokenCategory(raw,all){\n  const he=F(raw).replace(/^(?:בחר|תבחר|תבחרי)\\s+(?:(?:לי|את)\\s+)?(?:ה)?נושא\\s+/u,'').replace(/^(?:ה)?נושא\\s+/u,'').trim();\n  const ro=ht(raw).replace(/^(?:alege|selecteaza)\\s+(?:(?:un|o)\\s+)?(?:subiectul|subiect|tema)\\s+/u,'').replace(/^(?:subiectul|subiect|tema)\\s+/u,'').trim();\n  const matches=all.map(category=>{\n    let score=0;\n    for(const name of [category,...(ut[category]||[]),...(__roTopics[category]||[])]){\n      const a=F(name),b=ht(name);\n      if((a&&a===he)||(b&&b===ro))score=Math.max(score,100+name.length);\n      else if((a.length>=4&&he.includes(a))||(b.length>=4&&ro.includes(b)))score=Math.max(score,60+name.length);\n    }\n    return{category,score};\n  }).sort((a,b)=>b.score-a.score);\n  return matches[0]?.score>0?matches[0].category:null;\n}\nfunction __voiceIntent(raw,categories=[]){\n  const h=F(raw),r=ht(raw);\n  if(!h&&!r)return{type:'unknown',transcript:raw};\n  if(/^(?:עצור|תעצור|הפסק|תפסיק|כבה|סיים)\\s+(?:את\\s+)?(?:הרצף הקולי|רצף קולי|התרגול הקולי|תרגול קולי|ההאזנה|מצב קולי)$/u.test(h)||/^(?:opreste|opriti|inchide|termina)(?:\\s+(?:modul vocal|exercitiul vocal|antrenamentul vocal|ascultarea|seria vocala|exercitiul))?$/u.test(r))return{type:'stopVoice',transcript:raw};\n  if(/^(?:בחר|תבחר|תבחרי)\\s+(?:(?:לי|את)\\s+)?(?:ה)?נושא$/u.test(h)||/^(?:alege|selecteaza)\\s+(?:(?:un|o)\\s+)?(?:subiect|subiectul|tema)$/u.test(r))return{type:'chooseTopic',transcript:raw};\n  if(/^(?:בחירה רגילה|בחר בחירה רגילה|בחירת מילים רגילה|מצב רגיל|בחר רגיל)$/u.test(h)||/^(?:selectie normala|alegere normala|mod normal|modul normal|selectie obisnuita)$/u.test(r))return{type:'regularMode',transcript:raw};\n  if(/^(?:כל המילים ברצף|כל המילים לפי הסדר|מילים ברצף|מילים לפי הסדר|בחר כל המילים ברצף|מצב רציף)$/u.test(h)||/^(?:toate cuvintele pe rand|toate cuvintele in ordine|cuvintele pe rand|cuvintele in ordine|mod secvential|modul secvential|selectie secventiala)$/u.test(r))return{type:'sequentialMode',transcript:raw};\n  if(__isNextCategorySpeech(raw))return{type:'nextCategory',transcript:raw};\n  if(/^(?:בחר|תבחר|תבחרי)\\s+(?:(?:לי|את)\\s+)?(?:ה)?נושא\\s+/u.test(h)||/^(?:alege|selecteaza)\\s+(?:(?:un|o)\\s+)?(?:subiectul|subiect|tema)\\s+/u.test(r)){\n    const cat=__spokenCategory(raw,categories);\n    return cat?{type:'selectCategory',category:cat,transcript:raw}:{type:'chooseTopic',transcript:raw};\n  }\n  return{type:'unknown',transcript:raw};\n}\nfunction mt(){return`אפשר לומר:"
+  },
+  {
+    "description": "Use intent detector before Hebrew command parser",
+    "find": "if(__isNextCategorySpeech(e))return{type:`nextCategory`,transcript:e};",
+    "replacement": "let __intent=__voiceIntent(e,t);if(__intent.type!==`unknown`)return __intent;"
+  },
+  {
+    "description": "Describe new speech options",
+    "find": "אפשר לומר: תמשיך, עצור, דלג, עבור לנושא הבא, חזור על המילה, חזור על התשובה, בחר נושא, רשימת נושאים, סטטיסטיקה, או כבה הקשבה.",
+    "replacement": "אפשר לומר: תמשיך, עצור את הרצף הקולי, בחר נושא ואז שם הנושא, עבור לנושא הבא, בחירה רגילה, כל המילים ברצף, דלג, חזור על המילה, חזור על התשובה, רשימת נושאים, סטטיסטיקה, או כבה הקשבה. ברומנית: alege subiect, oprește, selecție normală, toate cuvintele pe rând."
+  },
+  {
+    "description": "Add topic dialogue and mode changes",
+    "find": "},Jt=async(e,t)=>{",
+    "replacement": "},\n__chooseTopic=async(session,phrase)=>{\n  await qt();\n  const language=/[\\u0590-\\u05FF]/u.test(phrase)?'he-IL':'ro-RO';\n  for(let turn=0;turn<4&&L(session);turn++){\n    const lang=turn%2===0?language:(language==='he-IL'?'ro-RO':'he-IL');\n    T(lang==='he-IL'?'מקשיב לשם הנושא בעברית':'Ascult numele subiectului');\n    await Nt(lang==='he-IL'?'איזה נושא לבחור?':'Ce subiect alegi?',lang,lang==='he-IL'?N.current.hebrewRate:N.current.romanianRate).catch(()=>{});\n    if(!L(session))return false;\n    try{\n      const heard=await Ft(opts=>st({...opts,language:lang,timeoutMs:13e3,maxAlternatives:5}),session);\n      if(!L(session))return false;\n      if(heard.some(item=>__voiceIntent(item.transcript,De.current).type==='stopVoice')){Qt();return false}\n      const name=heard.map(item=>__spokenCategory(item.transcript,De.current)).find(Boolean);\n      if(name){\n        await gt({category:name,weakWordsMode:!1});\n        __seqScope.current='';__seqLast.current=null;\n        S('נבחר נושא: '+name);\n        T('נבחר נושא: '+name);\n        await Nt('נבחר נושא '+name,'he-IL',N.current.hebrewRate).catch(()=>{});\n        return true;\n      }\n    }catch(err){\n      if(!L(session)||err.code==='aborted')return false;\n      if(!['no-speech','timeout','nomatch'].includes(err.code))T(err.message||'לא זוהה נושא');\n    }\n  }\n  if(L(session)){S('לא זוהה נושא. אמור בחר נושא כדי לנסות שוב.');await Nt('לא זיהיתי נושא','he-IL',N.current.hebrewRate).catch(()=>{})}\n  return false;\n},\n__doVoiceIntent=async(action,session)=>{\n  switch(action.type){\n    case 'stopVoice':await qt();Qt();return true;\n    case 'chooseTopic':await __chooseTopic(session,action.transcript||'');return true;\n    case 'selectCategory':\n      await qt();await gt({category:action.category,weakWordsMode:!1});\n      __seqScope.current='';__seqLast.current=null;\n      S('נבחר נושא: '+action.category);\n      await Nt('נבחר נושא '+action.category,'he-IL',N.current.hebrewRate).catch(()=>{});\n      return true;\n    case 'regularMode':\n    case 'sequentialMode':{\n      await qt();\n      const sequential=action.type==='sequentialMode';\n      await gt({weakWordsMode:!1,sequentialWordsMode:sequential,...(sequential?{wordSetMode:'all'}:{})});\n      __seqScope.current='';__seqLast.current=null;\n      S(sequential?'כל המילים ברצף':'בחירה רגילה');\n      await Nt(sequential?'כל המילים ברצף':'בחירה רגילה','he-IL',N.current.hebrewRate).catch(()=>{});\n      return true;\n    }\n    case 'nextCategory':await __nextCategory();return true;\n    default:return false;\n  }\n},Jt=async(e,t)=>{"
+  },
+  {
+    "description": "Process spoken command before answer score",
+    "find": "if(__spoken.some(__item=>__isNextCategorySpeech(__item.transcript))){let __changed=await __nextCategory();if(e===null&&__changed)await Ht();return{categoryChanged:!0}}",
+    "replacement": "let __intent=__spoken.map(item=>__voiceIntent(item.transcript,De.current)).find(a=>a.type!==`unknown`);if(__intent){await __doVoiceIntent(__intent,e);return{categoryChanged:!0}}"
+  },
+  {
+    "description": "Declare retry voice command result",
+    "find": "if(o&&!o.correct&&N.current.retryIncorrectOnce){",
+    "replacement": "let __second=null;if(o&&!o.correct&&N.current.retryIncorrectOnce){"
+  },
+  {
+    "description": "Handle voice intent even during a second attempt",
+    "find": "await Ut(e,{responseWindowMs:__responseWindow,adaptiveListening:a,maxListeningMs:2e4,speakResult:!1,speakTranslation:!0,throwOnFatal:!0,deferCycleCompletion:!0});if(!L(e))return}Bt()",
+    "replacement": "__second=await Ut(e,{responseWindowMs:__responseWindow,adaptiveListening:a,maxListeningMs:2e4,speakResult:!1,speakTranslation:!0,throwOnFatal:!0,deferCycleCompletion:!0});if(!L(e))return;if(__second?.categoryChanged)continue}Bt()"
+  },
+  {
+    "description": "Add stop and selection into Hebrew voice mode",
+    "find": "case`nextCategory`:{ke.current=!1,ce(!1);let moved=await __nextCategory();if(moved){await Gt(t);return!1}return L(t)}",
+    "replacement": "case`stopVoice`:await __doVoiceIntent(e,t);return!1;case`chooseTopic`:case`regularMode`:case`sequentialMode`:{await __doVoiceIntent(e,t);if(L(t))await Gt(t);return!1}case`nextCategory`:{ke.current=!1,ce(!1);let moved=await __nextCategory();if(moved){await Gt(t);return!1}return L(t)}"
+  },
+  {
+    "description": "Show supported Romanian/Hebrew commands in practice",
+    "find": "`נושא הבא: următorul subiect`].map",
+    "replacement": "`נושא הבא: următorul subiect`,`בחר נושא: alege subiect`,`עצור: oprește`,`בחירה רגילה: selecție normală`,`כל המילים ברצף: toate cuvintele pe rând`].map"
+  },
+  {
+    "description": "Explain bilingual commands in settings",
+    "find": "אפשר לנסות גם „עבור לנושא הבא”, אך זיהוי עברית בזמן שהמיקרופון מוגדר לרומנית תלוי בדפדפן.",
+    "replacement": "אפשר לומר „בחר נושא” / „alege subiect” ואז את שם הנושא; „עצור את הרצף הקולי” / „oprește”; „בחירה רגילה” / „selecție normală”; או „כל המילים ברצף” / „toate cuvintele pe rând”. בזמן תשובות ברומנית זיהוי פקודות בעברית תלוי בדפדפן. בחירת נושא מפעילה זיהוי בשתי השפות בתורות."
+  }
+];
+for (const patch of bilingualVoicePatches) {
+ const count = source.split(patch.find).length - 1;
+ if (count !== 1) throw new Error(`Cannot apply ${patch.description}: expected 1, got ${count}`);
+ source = source.replace(patch.find,patch.replacement);
+}
+
 const anchor = '}],m=n({addAttempt:()=>ne';
 const firstAnchor = source.indexOf(anchor);
 const secondAnchor = firstAnchor < 0 ? -1 : source.indexOf(anchor, firstAnchor + anchor.length);
