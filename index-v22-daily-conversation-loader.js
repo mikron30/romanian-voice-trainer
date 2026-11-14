@@ -244,6 +244,12 @@ for (const patch of bilingualVoicePatches) {
  source = source.replace(patch.find,patch.replacement);
 }
 
+// Prevent the running voice practice loop from cancelling command pronunciation.
+// Nt normally aborts the previous utterance on every call.
+const audioLockAnchor="Nt=async(e,t,n)=>{Ye(),await at(e,t,n)}";
+if(source.split(audioLockAnchor).length!==2)throw new Error('Audio lock anchor changed');
+source=source.replace(audioLockAnchor,"__guideAudioLocked=!1,Nt=async(e,t,n)=>{if(__guideAudioLocked)return;Ye();await at(e,t,n)}");
+
 // Display bilingual voice commands directly beside the active listening controls.
 // Make the visible command guide actionable. Reuse the same command executor as speech.
 const clickableGuidePatches = [
@@ -256,7 +262,8 @@ __clickVoiceGuide=async(entry)=>{
   const type=types[entry.he];
   if(!type)return;
   const session=ve.current;
-  // Stop the current listening window before speaking, so TTS is not scored as an answer.
+  // Hold all competing practice audio until the command has fully finished.
+  __guideAudioLocked=true;
   await qt();
   try{
     // Speak the command independently; do not start the topic announcement
@@ -283,6 +290,7 @@ __clickVoiceGuide=async(entry)=>{
     // A full two-second pause AFTER speech, not from the moment it starts.
     await new Promise(resolve=>setTimeout(resolve,2000));
   }catch(err){console.warn('Romanian pronunciation unavailable',err);await new Promise(resolve=>setTimeout(resolve,2000))}
+  __guideAudioLocked=false;
   if(type==='chooseTopic'&&!L(session)){S('הפעל רצף קולי כדי לבחור נושא בקול');return}
   await __doVoiceIntent({type,transcript:entry.he},session);
 },
