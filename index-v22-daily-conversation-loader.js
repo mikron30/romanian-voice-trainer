@@ -259,20 +259,30 @@ __clickVoiceGuide=async(entry)=>{
   // Stop the current listening window before speaking, so TTS is not scored as an answer.
   await qt();
   try{
-    const startedAt=Date.now();
-    await Nt(entry.ro,'ro-RO',N.current.romanianRate);
-    // Some speech engines resolve the TTS promise before audio has finished.
-    // Keep the current topic unchanged until speech has ended, then allow a short pause.
-    const synth=window.speechSynthesis;
-    if(synth){
-      const deadline=Date.now()+10000;
-      while((synth.speaking||synth.pending)&&Date.now()<deadline){
-        await new Promise(resolve=>setTimeout(resolve,100));
-      }
+    // Speak the command independently; do not start the topic announcement
+    // until the browser reports the Romanian utterance has actually ended.
+    if(window.speechSynthesis&&window.SpeechSynthesisUtterance){
+      await new Promise(resolve=>{
+        const synth=window.speechSynthesis;
+        const utterance=new SpeechSynthesisUtterance(entry.ro);
+        utterance.lang='ro-RO';
+        utterance.rate=Math.max(0.65,Math.min(1.2,Number(N.current.romanianRate)||0.85));
+        let finished=false;
+        const done=()=>{if(finished)return;finished=true;clearTimeout(watchdog);resolve()};
+        utterance.onend=done;
+        utterance.onerror=done;
+        const watchdog=setTimeout(done,12000);
+        synth.cancel();
+        synth.speak(utterance);
+        // Mobile browsers can pause speech synthesis while the tab is inactive.
+        try{synth.resume()}catch(_){}
+      });
+    }else{
+      await Nt(entry.ro,'ro-RO',N.current.romanianRate);
     }
-    const remaining=Math.max(0,2000-(Date.now()-startedAt));
-    if(remaining)await new Promise(resolve=>setTimeout(resolve,remaining));
-  }catch(err){console.warn('Romanian pronunciation unavailable',err)}
+    // A full two-second pause AFTER speech, not from the moment it starts.
+    await new Promise(resolve=>setTimeout(resolve,2000));
+  }catch(err){console.warn('Romanian pronunciation unavailable',err);await new Promise(resolve=>setTimeout(resolve,2000))}
   if(type==='chooseTopic'&&!L(session)){S('הפעל רצף קולי כדי לבחור נושא בקול');return}
   await __doVoiceIntent({type,transcript:entry.he},session);
 },
