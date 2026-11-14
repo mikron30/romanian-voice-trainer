@@ -258,7 +258,21 @@ __clickVoiceGuide=async(entry)=>{
   const session=ve.current;
   // Stop the current listening window before speaking, so TTS is not scored as an answer.
   await qt();
-  try{await Nt(entry.ro,'ro-RO',N.current.romanianRate)}catch(err){console.warn('Romanian pronunciation unavailable',err)}
+  try{
+    const startedAt=Date.now();
+    await Nt(entry.ro,'ro-RO',N.current.romanianRate);
+    // Some speech engines resolve the TTS promise before audio has finished.
+    // Keep the current topic unchanged until speech has ended, then allow a short pause.
+    const synth=window.speechSynthesis;
+    if(synth){
+      const deadline=Date.now()+10000;
+      while((synth.speaking||synth.pending)&&Date.now()<deadline){
+        await new Promise(resolve=>setTimeout(resolve,100));
+      }
+    }
+    const remaining=Math.max(0,2000-(Date.now()-startedAt));
+    if(remaining)await new Promise(resolve=>setTimeout(resolve,remaining));
+  }catch(err){console.warn('Romanian pronunciation unavailable',err)}
   if(type==='chooseTopic'&&!L(session)){S('הפעל רצף קולי כדי לבחור נושא בקול');return}
   await __doVoiceIntent({type,transcript:entry.he},session);
 },
