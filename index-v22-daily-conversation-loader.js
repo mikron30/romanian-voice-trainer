@@ -124,6 +124,67 @@ for (const patch of singleWordPatches) {
   source = source.replaceAll(patch.find, patch.replacement);
 }
 
+// Accept spoken next-category commands without scoring them as word answers.
+const nextTopicPatches = [
+  {
+    "description": "Recognize command in Hebrew commands mode",
+    "find": "function pt(e,t){let n=F(e);if(!n)return{type:`unknown`,transcript:e};",
+    "replacement": "function pt(e,t){let n=F(e);if(!n)return{type:`unknown`,transcript:e};if(__isNextCategorySpeech(e))return{type:`nextCategory`,transcript:e};"
+  },
+  {
+    "description": "Recognize Hebrew/Romanian topic-switch utterances",
+    "find": "function mt(){return`אפשר לומר:",
+    "replacement": "function __isNextCategorySpeech(e){let t=F(e),n=ht(e);return /^(?:(?:עבור|תעבור|תעברי|תעבורי|נעבור|לעבור|תעביר אותי)\\s+)?ל?ה?נושא\\s+הבא(?:\\s+בבקשה)?$/u.test(t)||/^(?:(?:treci|mergi|trecem|poti sa treci)\\s+(?:la|spre)\\s+)?(?:urmatorul subiect|subiectul urmator|urmatoarea tema|tema urmatoare)(?:\\s+te rog)?$/u.test(n)||/^(?:schimba|schimbam|schimbati)\\s+(?:subiectul|tema)$/u.test(n)}function mt(){return`אפשר לומר:"
+  },
+  {
+    "description": "Mention spoken topic command in help",
+    "find": "דלג, חזור על המילה, חזור על התשובה, בחר נושא, רשימת נושאים",
+    "replacement": "דלג, עבור לנושא הבא, חזור על המילה, חזור על התשובה, בחר נושא, רשימת נושאים"
+  },
+  {
+    "description": "Move to next active category without grading current word",
+    "find": "},Jt=async(e,t)=>{",
+    "replacement": "},__nextCategory=async()=>{let cats=De.current.filter(cat=>cat!==`הכול`&&be.current.some(word=>word.enabled&&word.category===cat&&__v12Set(word,N.current.wordSetMode||`first`,N.current.singleWordOnly)));if(!cats.length||(cats.length===1&&cats[0]===N.current.category)){S(`אין נושא אחר זמין לתרגול.`);await Nt(`אין נושא אחר זמין לתרגול.`,`he-IL`,N.current.hebrewRate).catch(()=>{});return!1}let idx=cats.indexOf(N.current.category),next=cats[(idx+1)%cats.length];await qt();await gt({category:next,weakWordsMode:!1});__seqScope.current=``;__seqLast.current=null;S(`עובר לנושא: ${next}`);T(`נבחר הנושא הבא: ${next}`);await Nt(`הנושא הבא הוא ${next}`,`he-IL`,N.current.hebrewRate).catch(()=>{});return!0},Jt=async(e,t)=>{"
+  },
+  {
+    "description": "Handle next category in Hebrew commands mode",
+    "find": "case`skip`:return ke.current=!1,ce(!1),await qt(),await Wt(t),L(t);",
+    "replacement": "case`nextCategory`:{ke.current=!1,ce(!1);let moved=await __nextCategory();if(moved){await Gt(t);return!1}return L(t)}case`skip`:return ke.current=!1,ce(!1),await qt(),await Wt(t),L(t);"
+  },
+  {
+    "description": "Retain recognized utterances before answer scoring",
+    "find": "try{let t=vt(await Ft(e=>ct(",
+    "replacement": "try{let __spoken=await Ft(e=>ct("
+  },
+  {
+    "description": "Handle command before scoring Romaninan answer",
+    "find": "),e),n,N.current.threshold);return await f()",
+    "replacement": "),e);if(__spoken.some(__item=>__isNextCategorySpeech(__item.transcript))){let __changed=await __nextCategory();if(e===null&&__changed)await Ht();return{categoryChanged:!0}}let t=vt(__spoken,n,N.current.threshold);return await f()"
+  },
+  {
+    "description": "Skip retry after next category command",
+    "find": "if(!L(e))return;if(o&&!o.correct&&N.current.retryIncorrectOnce)",
+    "replacement": "if(!L(e))return;if(o?.categoryChanged)continue;if(o&&!o.correct&&N.current.retryIncorrectOnce)"
+  },
+  {
+    "description": "Show Romanian command during voice practice",
+    "find": "s.wordSetMode===`sentences`?`מיד המשפט הבא`:`מיד המילה הבאה`].map",
+    "replacement": "s.wordSetMode===`sentences`?`מיד המשפט הבא`:`מיד המילה הבאה`,`נושא הבא: următorul subiect`].map"
+  },
+  {
+    "description": "Document spoken phrase and language limitation",
+    "find": "` לחץ על „בחר נושא בקול” כדי לעבור זמנית להאזנה לפקודות כמו `,mt()]",
+    "replacement": "` לחץ על „בחר נושא בקול” כדי לעבור זמנית להאזנה לפקודות כמו `,mt(),` בזמן ההאזנה לתשובה ברומנית אפשר לומר „următorul subiect” כדי לעבור לנושא הבא בלי לרשום תשובה שגויה. אפשר לנסות גם „עבור לנושא הבא”, אך זיהוי עברית בזמן שהמיקרופון מוגדר לרומנית תלוי בדפדפן.`]"
+  }
+];
+for (const patch of nextTopicPatches) {
+  const matches = source.split(patch.find).length - 1;
+  if (matches !== 1) {
+    throw new Error(`Unexpected Romanian bundle for ${patch.description}: ${matches} matches`);
+  }
+  source = source.replace(patch.find, patch.replacement);
+}
+
 const anchor = '}],m=n({addAttempt:()=>ne';
 const firstAnchor = source.indexOf(anchor);
 const secondAnchor = firstAnchor < 0 ? -1 : source.indexOf(anchor, firstAnchor + anchor.length);
