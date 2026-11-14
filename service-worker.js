@@ -1,4 +1,4 @@
-const CACHE_NAME = 'romanian-voice-trainer-v23-single-word-practice';
+const CACHE_NAME = 'romanian-voice-trainer-v24-next-topic-voice-command';
 const BASE_URL = new URL('./', self.location.href).href;
 const APP_SHELL = [
   BASE_URL,
