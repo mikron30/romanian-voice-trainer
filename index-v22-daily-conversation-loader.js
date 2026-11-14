@@ -244,6 +244,25 @@ for (const patch of bilingualVoicePatches) {
  source = source.replace(patch.find,patch.replacement);
 }
 
+// Display bilingual voice commands directly beside the active listening controls.
+const voiceGuidePatches = [
+  {
+    "description": "Show all supported bilingual spoken commands on the practice screen",
+    "find": "ae&&(0,I.jsx)(`div`,{className:`command-strip`",
+    "replacement": "(0,I.jsxs)(`div`,{className:`voice-commands-guide`,children:[\n(0,I.jsx)(`strong`,{className:`voice-commands-title`,children:`🎙️ פקודות שאפשר לומר בזמן התרגול`}),\n(0,I.jsx)(`p`,{className:`voice-commands-lead`,children:`אפשר לומר אחת מהפקודות בעברית או ברומנית כשהאפליקציה מקשיבה לתשובה:`}),\n(0,I.jsx)(`div`,{className:`voice-commands-grid`,children:[\n{he:`בחר נושא`,ro:`Alege subiect`},\n{he:`עבור לנושא הבא`,ro:`Următorul subiect`},\n{he:`עצור את הרצף הקולי`,ro:`Oprește`},\n{he:`בחירה רגילה`,ro:`Selecție normală`},\n{he:`כל המילים ברצף`,ro:`Toate cuvintele pe rând`}\n].map(entry=>(0,I.jsxs)(`div`,{className:`voice-command-pair`,children:[\n(0,I.jsx)(`span`,{className:`voice-command-he`,dir:`rtl`,children:entry.he}),\n(0,I.jsx)(`span`,{className:`voice-command-ro`,dir:`ltr`,lang:`ro`,children:entry.ro})\n]},entry.he))}),\n(0,I.jsx)(`p`,{className:`voice-commands-note`,children:`אחרי ״בחר נושא״ אמרו את שם הנושא, למשל ״משפחה״ / „Familie” או ״אוכל״ / „Mâncare”. בזמן ההאזנה לתשובה ברומנית עדיף להשתמש בפקודות ברומנית.`})\n]}),ae&&(0,I.jsx)(`div`,{className:`command-strip`"
+  },
+  {
+    "description": "Keep the narrow spoken word flow strip focused on progress, instead of repeating commands",
+    "find": ",`נושא הבא: următorul subiect`,`בחר נושא: alege subiect`,`עצור: oprește`,`בחירה רגילה: selecție normală`,`כל המילים ברצף: toate cuvintele pe rând`].map",
+    "replacement": "].map"
+  }
+];
+for (const patch of voiceGuidePatches) {
+  const count = source.split(patch.find).length - 1;
+  if (count !== 1) throw new Error(`Could not apply ${patch.description}; found ${count} matches`);
+  source = source.replace(patch.find,patch.replacement);
+}
+
 const anchor = '}],m=n({addAttempt:()=>ne';
 const firstAnchor = source.indexOf(anchor);
 const secondAnchor = firstAnchor < 0 ? -1 : source.indexOf(anchor, firstAnchor + anchor.length);
