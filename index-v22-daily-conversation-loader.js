@@ -282,15 +282,16 @@ const voiceGuidePatches = [
     "replacement": "].map"
   }
 ];
-for (const patch of clickableGuidePatches) {
- const count=source.split(patch.find).length-1;
- if(count!==1)throw new Error('Cannot add clickable commands: '+patch.description+' ('+count+')');
- source=source.replace(patch.find,patch.replacement);
-}
 for (const patch of voiceGuidePatches) {
   const count = source.split(patch.find).length - 1;
   if (count !== 1) throw new Error(`Could not apply ${patch.description}; found ${count} matches`);
   source = source.replace(patch.find,patch.replacement);
+}
+
+for (const patch of clickableGuidePatches) {
+ const count=source.split(patch.find).length-1;
+ if(count!==1)throw new Error('Cannot add clickable commands: '+patch.description+' ('+count+')');
+ source=source.replace(patch.find,patch.replacement);
 }
 
 const anchor = '}],m=n({addAttempt:()=>ne';
